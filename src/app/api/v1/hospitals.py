@@ -107,22 +107,22 @@ async def get_hospital_doctors(
     db: Annotated[AsyncSession, Depends(async_get_db)]
 ) -> dict:
     hospital_id = current_user["hospital_id"]
-    hospital_data = await crud_hospitals.get(db=db, hospital_id=hospital_id)
+    hospital_data = await crud_hospitals.get(db=db, hospital_id=hospital_id, )
     if hospital_data is None:
         raise NotFoundException("Hospital not found")
-    hospital_doctors = await crud_doctors.get_multi(db=db, hospital_id=hospital_id, schema_to_select=DoctorRead)
+    hospital_doctors = await crud_doctors.get_multi(db=db, hospital_id=hospital_id, schema_to_select=DoctorRead, is_deleted=False)
     return hospital_doctors
-    
-@router.get("/hospital/patients", status_code = 200)
+
+
+@router.get("/hospital/patients", status_code=200)
 async def get_hospital_patients(
     request: Request,
     current_user: Annotated[dict, Depends(get_current_doctor_or_hospital)],
     db: Annotated[AsyncSession, Depends(async_get_db)]
-)-> dict:
+) -> dict:
     hospital_id = current_user["hospital_id"]
     hospital_data = await crud_hospitals.get(db=db, hospital_id=hospital_id)
     if hospital_data is None:
         raise NotFoundException("Hospital not found")
-    hospital_patients = await crud_patients.get_multi(db=db, hospital_id = hospital_id, schema_to_select=PatientRead)
+    hospital_patients = await crud_patients.get_multi(db=db, hospital_id=hospital_id, schema_to_select=PatientRead)
     return hospital_patients
-

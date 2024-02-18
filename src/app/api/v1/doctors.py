@@ -45,8 +45,6 @@ async def write_doctor(
 
     response = cloudinary.uploader.upload(file.file)
 
-    # print(current_user)
-
     doctor_internal_dict = doctor.model_dump()
     doctor_internal_dict["hashed_password"] = get_password_hash(
         password=doctor_internal_dict["password"])
@@ -58,3 +56,17 @@ async def write_doctor(
         **doctor_internal_dict)
     created_doctor: DoctorRead = await crud_doctors.create(db=db, object=doctor_internal)
     return created_doctor
+
+
+@router.delete("/doctor/{doctor_id}")
+async def erase_doctor(
+    request:Request,
+    doctor_id: str,
+    db: Annotated[AsyncSession, Depends(async_get_db)],
+    current_user: Annotated[HospitalRead, Depends(get_current_doctor_or_hospital)]
+):
+    doctor = await crud_doctors.get(db=db, doctor_id=doctor_id)
+    if doctor is None:
+        raise NotFoundException("Doctor not found")
+    await crud_doctors.delete(db=db, doctor_id=doctor_id)
+    return {"detail": "Successfully deleted the doctor"}

@@ -72,3 +72,18 @@ async def create_patient_with_special_id(request: Request, current_user: Annotat
     patient_internal = PatientCreateInternal(**patient_details)
     created_patient: PatientRead = await crud_patients.create(db=db, object=patient_internal)
     return created_patient
+
+@router.get("/patient/{special_id}")
+async def read_patient_details(
+    request:Request,
+    special_id: str,
+    db: Annotated[AsyncSession, Depends(async_get_db)],
+    current_user: Annotated[dict, Depends(get_current_doctor_or_hospital)]
+):
+    patient_row = await crud_patients.get(db=db, special_id=special_id, schema_to_select=PatientRead)
+    if patient_row is None:
+        raise NotFoundException("Patient not found")
+    if patient_row["hospital_id"] != current_user["hospital_id"]:
+        raise ForbiddenException("You are not allowed to access this patient")
+    return patient_row
+    
