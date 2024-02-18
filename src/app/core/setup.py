@@ -14,12 +14,13 @@ from ..middleware.client_cache_middleware import ClientCacheMiddleware
 from .config import (
     AppSettings,
     ClientSideCacheSettings,
+    CloudinaryConfigSettings,
     DatabaseSettings,
     EnvironmentOption,
     EnvironmentSettings,
     RedisCacheSettings,
-    RedisQueueSettings,
-    RedisRateLimiterSettings,
+    # RedisQueueSettings,
+    # RedisRateLimiterSettings,
     settings,
 )
 from .db.database import Base
@@ -43,29 +44,29 @@ async def close_redis_cache_pool() -> None:
     await cache.client.aclose()  # type: ignore
 
 
-# -------------- queue --------------
-async def create_redis_queue_pool() -> None:
-    queue.pool = await create_pool(RedisSettings(host=settings.REDIS_QUEUE_HOST, port=settings.REDIS_QUEUE_PORT))
+# # -------------- queue --------------
+# async def create_redis_queue_pool() -> None:
+#     queue.pool = await create_pool(RedisSettings(host=settings.REDIS_QUEUE_HOST, port=settings.REDIS_QUEUE_PORT))
 
 
-async def close_redis_queue_pool() -> None:
-    await queue.pool.aclose()  # type: ignore
+# async def close_redis_queue_pool() -> None:
+#     await queue.pool.aclose()  # type: ignore
 
 
-# -------------- rate limit --------------
-async def create_redis_rate_limit_pool() -> None:
-    rate_limit.pool = redis.ConnectionPool.from_url(settings.REDIS_RATE_LIMIT_URL)
-    rate_limit.client = redis.Redis.from_pool(rate_limit.pool)  # type: ignore
+# # -------------- rate limit --------------
+# async def create_redis_rate_limit_pool() -> None:
+#     rate_limit.pool = redis.ConnectionPool.from_url(settings.REDIS_RATE_LIMIT_URL)
+#     rate_limit.client = redis.Redis.from_pool(rate_limit.pool)  # type: ignore
 
 
-async def close_redis_rate_limit_pool() -> None:
-    await rate_limit.client.aclose()  # type: ignore
+# async def close_redis_rate_limit_pool() -> None:
+#     await rate_limit.client.aclose()  # type: ignore
 
 
-# -------------- application --------------
-async def set_threadpool_tokens(number_of_tokens: int = 100) -> None:
-    limiter = anyio.to_thread.current_default_thread_limiter()
-    limiter.total_tokens = number_of_tokens
+# # -------------- application --------------
+# async def set_threadpool_tokens(number_of_tokens: int = 100) -> None:
+#     limiter = anyio.to_thread.current_default_thread_limiter()
+#     limiter.total_tokens = number_of_tokens
 
 
 # -------------- application --------------
@@ -76,8 +77,9 @@ def create_application(
         | RedisCacheSettings
         | AppSettings
         | ClientSideCacheSettings
-        | RedisQueueSettings
-        | RedisRateLimiterSettings
+        | CloudinaryConfigSettings
+        # | RedisQueueSettings
+        # | RedisRateLimiterSettings
         | EnvironmentSettings
     ),
     create_tables_on_start: bool = True,
@@ -134,13 +136,14 @@ def create_application(
         kwargs.update(to_update)
 
     if isinstance(settings, EnvironmentSettings):
-        kwargs.update({"docs_url": None, "redoc_url": None, "openapi_url": None})
+        kwargs.update(
+            {"docs_url": None, "redoc_url": None, "openapi_url": None})
 
     application = FastAPI(**kwargs)
 
     # --- application created ---
     application.include_router(router)
-    application.add_event_handler("startup", set_threadpool_tokens)
+    # application.add_event_handler("startup", set_threadpool_tokens)
 
     if isinstance(settings, DatabaseSettings) and create_tables_on_start:
         application.add_event_handler("startup", create_tables)
@@ -152,19 +155,20 @@ def create_application(
     if isinstance(settings, ClientSideCacheSettings):
         application.add_middleware(ClientCacheMiddleware, max_age=settings.CLIENT_CACHE_MAX_AGE)
 
-    if isinstance(settings, RedisQueueSettings):
-        application.add_event_handler("startup", create_redis_queue_pool)
-        application.add_event_handler("shutdown", close_redis_queue_pool)
+    # if isinstance(settings, RedisQueueSettings):
+    #     application.add_event_handler("startup", create_redis_queue_pool)
+    #     application.add_event_handler("shutdown", close_redis_queue_pool)
 
-    if isinstance(settings, RedisRateLimiterSettings):
-        application.add_event_handler("startup", create_redis_rate_limit_pool)
-        application.add_event_handler("shutdown", close_redis_rate_limit_pool)
+    # if isinstance(settings, RedisRateLimiterSettings):
+    #     application.add_event_handler("startup", create_redis_rate_limit_pool)
+    #     application.add_event_handler("shutdown", close_redis_rate_limit_pool)
 
     if isinstance(settings, EnvironmentSettings):
         if settings.ENVIRONMENT != EnvironmentOption.PRODUCTION:
             docs_router = APIRouter()
             if settings.ENVIRONMENT != EnvironmentOption.LOCAL:
-                docs_router = APIRouter(dependencies=[Depends(get_current_superuser)])
+                docs_router = APIRouter(
+                    dependencies=[Depends(get_current_superuser)])
 
             @docs_router.get("/docs", include_in_schema=False)
             async def get_swagger_documentation() -> fastapi.responses.HTMLResponse:
@@ -176,7 +180,8 @@ def create_application(
 
             @docs_router.get("/openapi.json", include_in_schema=False)
             async def openapi() -> dict[str, Any]:
-                out: dict = get_openapi(title=application.title, version=application.version, routes=application.routes)
+                out: dict = get_openapi(
+                    title=application.title, version=application.version, routes=application.routes)
                 return out
 
             application.include_router(docs_router)

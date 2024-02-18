@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from ..core.schemas import PersistentDeletion, TimestampSchema, UUIDSchema
 
 
-class UserBase(BaseModel):
+class PatientBase(BaseModel):
     firstname: Annotated[str, Field(
         min_length=2, max_length=30, examples=["User"])]
     lastname: Annotated[str, Field(
@@ -15,20 +15,18 @@ class UserBase(BaseModel):
     gender: Annotated[str, Field(examples=["Male"])]
     address: str
     phone: Annotated[str, Field(examples=["+2347040804981"])]
-    email: Annotated[EmailStr, Field(examples=["user.userson@example.com"])]
     city: Annotated[str, Field(examples=["Lagos"])]
     state_of_residence: Annotated[str, Field(examples=["Lagos"])]
 
 
-class User(TimestampSchema, UserBase, UUIDSchema, PersistentDeletion):
+class Patient(TimestampSchema, PatientBase, UUIDSchema, PersistentDeletion):
     profile_image_url: Annotated[str, Field(
         default="https://www.profileimageurl.com")]
-    hashed_password: str
     is_superuser: bool = False
-    role: str = "User"
+    role: str = "Patient"
 
 
-class UserRead(BaseModel):
+class PatientRead(BaseModel):
     id: int
 
     firstname: Annotated[str, Field(
@@ -39,30 +37,24 @@ class UserRead(BaseModel):
     gender: Annotated[str, Field(examples=["Male"])]
     address: str
     phone: Annotated[str, Field(examples=["+2347040804981"])]
-    email: Annotated[EmailStr, Field(examples=["user.userson@example.com"])]
-    profile_image_url: str
+    # profile_image_url: str
     city: Annotated[str, Field(examples=["Lagos"])]
     state_of_residence: Annotated[str, Field(examples=["Lagos"])]
     special_id: str
+    hospital_id: str
+    created_at: datetime
 
-
-class UserCreate(UserBase):
+class PatientCreate(PatientBase):
     model_config = ConfigDict(extra="forbid")
 
-    password: Annotated[str, Field(
-        pattern=r"^.{8,}|[0-9]+|[A-Z]+|[a-z]+|[^a-zA-Z0-9]+$", examples=["Str1ngst!"])]
 
-    # special_id: str
-
-
-class UserCreateInternal(UserBase):
-    hashed_password: str
+class PatientCreateInternal(PatientBase):
     special_id: str
+    hospital_id: str
 
 
-class UserUpdate(BaseModel):
+class PatientUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
-
     firstname: Optional[Annotated[str, Field(
         min_length=2, max_length=30, examples=["User"])]] = None
     lastname: Optional[Annotated[str, Field(
@@ -71,8 +63,6 @@ class UserUpdate(BaseModel):
     gender: Optional[Annotated[str, Field(examples=["Male"])]] = None
     address: Optional[str] = None
     phone: Optional[Annotated[str, Field(examples=["+2347040804981"])]] = None
-    email: Optional[Annotated[EmailStr, Field(
-        examples=["user.userson@example.com"])]] = None
     profile_image_url: Optional[Annotated[str, Field(
         pattern=r"^(https?|ftp)://[^\s/$.?#].[^\s]*$", examples=["https://www.profileimageurl.com"])]] = None
     city: Optional[Annotated[str, Field(examples=["Lagos"])]] = None
@@ -80,20 +70,16 @@ class UserUpdate(BaseModel):
                                            Field(examples=["Lagos"])]] = None
 
 
-class UserUpdateInternal(UserUpdate):
+class PatientUpdateInternal(PatientUpdate):
     updated_at: datetime
 
 
-class UserTierUpdate(BaseModel):
-    tier_id: int
-
-
-class UserDelete(BaseModel):
+class PatientDelete(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     is_deleted: bool
     deleted_at: datetime
 
 
-class UserRestoreDeleted(BaseModel):
+class PatientRestoreDeleted(BaseModel):
     is_deleted: bool
