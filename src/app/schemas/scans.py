@@ -32,4 +32,24 @@ class ScanBase(BaseModel):
 
 
 class ScanCreate(ScanBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class ScanRead(BaseModel):
+    scan: dict
+    detailed_description: dict
+
+class ScanUpdate(BaseModel):
     pass
+
+class Scan(ScanBase, TimestampSchema, UUIDSchema, PersistentDeletion):
+    pass
+
+class ScanCreateInternal(ScanBase):
+    model_config = ConfigDict(extra="forbid")
+
+
+class ScanDelete(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    deleted_at: datetime
+    is_deleted: bool = True
