@@ -12,19 +12,20 @@ class Scans(Base):
     id: Mapped[int] = mapped_column(
         "id", autoincrement=True, nullable=False, unique=True, primary_key=True, init=False)
 
-    label_name: Mapped[str] = mapped_column(String(50), nullable=False, unique=True)
+    label_name: Mapped[str] = mapped_column(
+        String(50), nullable=False, )
 
     label_id: Mapped[str] = mapped_column(
-        String, nullable=False, unique=True)
-    
+        String, nullable=False,)
+
     scan_id: Mapped[str] = mapped_column(
-        String, nullable=False, unique=True)
-    
+        String, nullable=False, )
+
     label_confidence: Mapped[str] = mapped_column(Integer, nullable=False)
 
     detected_conditions: Mapped[str] = mapped_column(
         String, nullable=False,)
-    
+
     severity: Mapped[str] = mapped_column(
         String, nullable=False,)
 
@@ -35,7 +36,7 @@ class Scans(Base):
 
     description: Mapped[str] = mapped_column(String, nullable=False)
 
-    recommendation: Mapped[str] = mapped_column(String, nullable=False)
+    recommendations: Mapped[str] = mapped_column(String, nullable=False)
 
     special_id: Mapped[str] = mapped_column(String, nullable=False,)
 
@@ -45,10 +46,8 @@ class Scans(Base):
     updated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), default=None)
 
-
     deleted_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), default=None)
     is_deleted: Mapped[bool] = mapped_column(default=False, index=True)
     uuid: Mapped[uuid_pkg.UUID] = mapped_column(
         default_factory=uuid_pkg.uuid4, primary_key=True, unique=True)
-    

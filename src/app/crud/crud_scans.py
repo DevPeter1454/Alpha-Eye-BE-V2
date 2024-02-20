@@ -1,8 +1,9 @@
 from fastcrud import FastCRUD
 
-from ..models.scans import Scan
-from ..schemas.scans import ScanCreateInternal, ScanUpdate, ScanUpdateInternal, ScanDelete
+from ..models.scans import Scans
+from ..schemas.scans import ScanCreateInternal, ScanUpdate, ScanRead, ScanDelete
 
-CRUDScan = FastCRUD[Scan, ScanCreateInternal, ScanUpdateInternal, ScanUpdate, ScanDelete]
+CRUDScan = FastCRUD[Scans, ScanCreateInternal, ScanRead,
+                    ScanUpdate, ScanDelete]
 
-crud_scans = CRUDScan(Scan)
+crud_scans = CRUDScan(Scans)

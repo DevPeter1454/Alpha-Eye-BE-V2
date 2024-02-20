@@ -84,28 +84,33 @@ async def get_current_doctor_or_hospital(current_user: Annotated[dict, Depends(g
     if current_user["role"] not in ["Doctor", "Hospital"]:
         raise ForbiddenException("You do not have enough privileges.")
     if current_user["role"] == "Hospital" and not current_user["is_approved"]:
-        raise ForbiddenException("You are not approved yet. Please watch out for a verification email from us.")
+        raise ForbiddenException(
+            "You are not approved yet. Please watch out for a verification email from us.")
 
     return current_user
 
 
 def generate_special_id():
     random_value = str(randint(0, 999999)).zfill(6)
-    special_id = f"Alpha-Eye {random_value}"
+    special_id = f"AE{random_value}"
     return special_id
+
 
 def generate_doctor_id():
     random_value = str(randint(0, 999999)).zfill(6)
-    doctor_id = f"Alpha-Doctor {random_value}"
+    doctor_id = f"AD{random_value}"
     return doctor_id
 
 
 def generate_hospital_id():
     random_value = str(randint(0, 999999)).zfill(6)
-    hospital_id = f"Alpha-Hospital {random_value}"
+    hospital_id = f"AH{random_value}"
     return hospital_id
 
-
+def generate_scan_id():
+    random_value = str(randint(0, 999999)).zfill(6)
+    scan_id = f"Scan{random_value}"
+    return scan_id
 # async def rate_limiter(
 #     request: Request, db: Annotated[AsyncSession, Depends(async_get_db)], user: User | None = Depends(get_optional_user)
 # ) -> None:
