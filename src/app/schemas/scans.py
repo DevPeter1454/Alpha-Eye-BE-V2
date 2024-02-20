@@ -22,7 +22,7 @@ class ScanBase(BaseModel):
     title: Annotated[str, Field(
         min_length=2, max_length=30, examples=["User"])]
     description: Annotated[str, Field(
-        None, min_length=5, )]
+        None, min_length=3, )]
     recommendations: str
 
     created_at: datetime

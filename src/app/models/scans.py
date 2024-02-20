@@ -36,7 +36,7 @@ class Scans(Base):
 
     description: Mapped[str] = mapped_column(String, nullable=False)
 
-    recommendations: Mapped[str] = mapped_column(String, nullable=False)
+    recommendations: Mapped[str] = mapped_column(String, nullable=True)
 
     special_id: Mapped[str] = mapped_column(String, nullable=False,)
 

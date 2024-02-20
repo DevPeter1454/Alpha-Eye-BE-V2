@@ -11,6 +11,7 @@ from ...core.exceptions.http_exceptions import UnauthorizedException
 from ...core.schemas import Token
 from ...schemas.user import UserRead
 from ...schemas.hospital import HospitalRead
+from ...schemas.doctor import DoctorRead
 from ...crud.crud_users import crud_users
 from ...core.security import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
@@ -28,16 +29,16 @@ async def login_for_access_token(
     response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(async_get_db)],
-    role: str = "User",
+    role: str = "Doctor",
 ):
 
     user = await authenticate_user(email=form_data.username, password=form_data.password, role=role, db=db)
     if not user:
         raise UnauthorizedException("Wrong email or password.")
 
-    user_read = UserRead(**user) if role == "User" else HospitalRead(**user)
+    user_read = UserRead(**user) if role == "User" else HospitalRead(**user) if role == "Hospital" else DoctorRead(**user)
 
-    email_to_encode = user["email"] if role == "User" else user["admin_email"]
+    email_to_encode = user["email"] if role == "User" else user["admin_email"] if role == "Hospital" else user["email"]
 
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = await create_access_token(data={"sub": email_to_encode, "role": role}, expires_delta=access_token_expires)

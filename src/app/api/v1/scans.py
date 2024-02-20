@@ -19,6 +19,7 @@ from ...crud.crud_rate_limit import crud_rate_limits
 from ...crud.crud_users import crud_users
 from ...crud.crud_tier import crud_tiers
 from ...crud.crud_scans import crud_scans
+from ...crud.crud_patients import crud_patients
 from ...schemas.scans import ScanCreate, ScanRead, ScanUpdate
 from ...schemas.user import UserRead
 from ...core.utils.cache import cache
@@ -177,10 +178,158 @@ async def upload_scan(
             }
 
 
-@router.get("/history", status_code = 200)
+@router.get("/history", status_code=200)
 async def read_user_scan_history(
-    request:Request,
+    request: Request,
     db: Annotated[AsyncSession, Depends(async_get_db)],
-    current_user: Annotated[UserRead, Depends(get_current_user)],
+    current_user: Annotated[dict, Depends(get_current_user)],
+    page: int = 1,
+    items_per_page: int = 10
 ):
-    pass
+    if current_user["role"] in ["Doctor", "Hospital"]:
+        raise ForbiddenException("Not authorized")
+
+    user_exists = await crud_users.exists(db=db, id=current_user["id"])
+
+    if not user_exists:
+        raise NotFoundException("User not found")
+
+    scans = await crud_scans.get_multi(
+        db=db,
+        special_id=current_user["special_id"],
+        offset=compute_offset(page, items_per_page),
+        limit=items_per_page,
+    )
+
+    all_scans = []
+
+    for scan in scans["data"]:
+        all_scans.append(
+            {
+                "scan": {
+                    "label_name": scan["label_name"],
+                    "label_id": scan["label_id"],
+                    "label_confidence": scan["label_confidence"],
+                    "detected_conditions": scan["detected_conditions"],
+                    "severity": scan["severity"],
+                    "health_status": scan["health_status"],
+                    "scan_id": scan["scan_id"],
+                    "title": scan["title"],
+                    "description": scan["description"],
+                    "recommendations": scan["recommendations"],
+                    "created_at": scan["created_at"],
+                    "is_deleted": scan["is_deleted"],
+                    "special_id": scan["special_id"]
+                },
+                "detailed_description": {
+                    "title": scan["title"],
+                    "description": scan["description"],
+                    "recommendation": scan["recommendations"]
+                }
+            }
+        )
+
+    return all_scans
+
+
+@router.get("/history/{scan_id}")
+@cache(key_prefix="{scan_id}_scan_cache", resource_id_name="scan_id")
+async def read_scan_by_id(
+    request: Request,
+    scan_id: str,
+    db: Annotated[AsyncSession, Depends(async_get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
+):
+    user_exists = await crud_users.exists(db=db, id=current_user["id"])
+
+    if not user_exists:
+        raise NotFoundException("User not found")
+
+    scan = await crud_scans.get(db=db, scan_id=scan_id)
+
+    if not scan:
+        raise NotFoundException("Scan not found")
+
+    scan_response = {
+        "label_name": scan["label_name"],
+        "label_confidence": scan["label_confidence"],
+        "label_id": scan["label_id"],
+        "detected_conditions": scan["detected_conditions"],
+        "severity": scan["severity"],
+        "health_status": scan["health_status"],
+        "scan_id": scan["scan_id"],
+        "title": scan["title"],
+        "description": scan["description"],
+        "recommendations": scan["recommendations"],
+        "created_at": scan["created_at"],
+        "is_deleted": scan["is_deleted"],
+        "special_id": scan["special_id"],
+        "detailed_description": {
+            "title": scan["title"],
+            "description": scan["description"],
+            "recommendation": scan["recommendations"]
+        }
+    }
+
+    return scan_response
+
+
+@router.post("/doctor/upload/{patient_id}", status_code=201)
+async def write_patient_scan(
+    request: Request,
+    patient_id: str,
+    db: Annotated[AsyncSession, Depends(async_get_db)],
+    current_user: Annotated[dict, Depends(get_current_doctor_or_hospital)],
+    file: UploadFile = File(...)
+):
+    patient = await crud_patients.get(db=db, special_id=patient_id)
+
+    if not patient:
+        raise NotFoundException("Patient not found")
+
+    response = cloudinary.uploader.upload(file.file)
+
+    url = 'https://www.nyckel.com/v1/functions/1havh70pkqgnqmes/invoke'
+
+    data = {
+        "data": response['url']
+    }
+
+    response_from_external_api = requests.post(url, json=data)
+
+    label_name = response_from_external_api.json()['labelName']
+
+    label_id = response_from_external_api.json()['labelId']
+
+    label_confidence = response_from_external_api.json()['confidence']
+
+    scan_response = {
+        "label_name": label_name,
+        "label_id": label_id,
+        "label_confidence": int(label_confidence * 100),
+        "detected_conditions": "Cataracts" if label_name == "Cataracts" else "None",
+        "severity": "Mild",
+        "health_status": "Not Normal" if label_name == "Cataracts" else "None",
+        "scan_id": generate_scan_id(),
+        "title": current_user["doctor_id"],
+        "description": "None",
+        "recommendations": "None",
+        "special_id": patient_id,
+        "created_at": datetime.datetime.now(),
+    }
+
+    scan_internal_create = ScanCreate(**scan_response)
+    created_scan = await crud_scans.create(db=db, object=scan_internal_create)
+    patient_info = await crud_patients.get(db=db, special_id=patient_id)
+
+    response_json = {
+        "patient_name": patient_info["firstname"] + " " + patient_info["lastname"],
+        "patient_id": patient_info["special_id"],
+        "phone_number": patient_info["phone"],
+        "age": patient_info["age"],
+        "gender": patient_info["gender"],
+        "address": patient_info["address"],
+        "scan": created_scan
+    }
+
+    return response_json

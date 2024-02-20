@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..crud.crud_users import crud_users
 from ..crud.crud_hospitals import crud_hospitals
+from ..crud.crud_doctors import crud_doctors
 from .config import settings
 from .db.crud_token_blacklist import crud_token_blacklist
 from .schemas import TokenBlacklistCreate, TokenData
@@ -36,7 +37,11 @@ async def authenticate_user(role: str, email: str, password: str, db: AsyncSessi
 
     pass
 
-    db_user: dict | None = await crud_users.get(db=db, email=email, is_deleted=False) if role == 'User' else await crud_hospitals.get(db=db, admin_email=email, is_deleted=False)
+    db_user: dict | None = (
+        await crud_users.get(db=db, email=email, is_deleted=False) if role == 'User' else
+        await crud_hospitals.get(db=db, admin_email=email, is_deleted=False) if role == "Hospital" else
+        await crud_doctors.get(db=db, email=email, is_deleted=False)
+    )
 
 
     if not db_user:
@@ -93,7 +98,7 @@ async def verify_token(token: str, db: AsyncSession) -> TokenData | None:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username_or_email: str = payload.get("sub")
-        role:str = payload.get("role")
+        role: str = payload.get("role")
         if username_or_email is None:
             return None
         return TokenData(username_or_email=username_or_email, role=role)

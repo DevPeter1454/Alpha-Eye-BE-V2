@@ -13,6 +13,7 @@ from ..crud.crud_rate_limit import crud_rate_limits
 from ..crud.crud_tier import crud_tiers
 from ..crud.crud_users import crud_users
 from ..crud.crud_hospitals import crud_hospitals
+from ..crud.crud_doctors import crud_doctors
 from ..models.user import User
 from ..schemas.rate_limit import sanitize_path
 from random import randint
@@ -30,7 +31,7 @@ async def get_current_user(
     if token_data is None:
         raise UnauthorizedException("User not authenticated.")
 
-    user: dict | None = await crud_users.get(db=db, email=token_data.username_or_email, is_deleted=False) if token_data.role == "User" else await crud_hospitals.get(db=db, admin_email=token_data.username_or_email, is_deleted=False)
+    user: dict | None = await crud_users.get(db=db, email=token_data.username_or_email, is_deleted=False) if token_data.role == "User" else await crud_hospitals.get(db=db, admin_email=token_data.username_or_email, is_deleted=False) if token_data.role == "Hospital" else await crud_doctors.get(db=db, admin_email=token_data.username_or_email, is_deleted=False)
 
     # if "@" in token_data.username_or_email:
     #     user: dict | None = await crud_users.get(db=db, email=token_data.username_or_email, is_deleted=False)
@@ -106,6 +107,7 @@ def generate_hospital_id():
     random_value = str(randint(0, 999999)).zfill(6)
     hospital_id = f"AH{random_value}"
     return hospital_id
+
 
 def generate_scan_id():
     random_value = str(randint(0, 999999)).zfill(6)
