@@ -20,8 +20,13 @@ from ...schemas.hospital import HospitalCreate, HospitalCreateInternal, Hospital
 from ...schemas.doctor import DoctorRead
 from ...schemas.patient import PatientRead
 from pydantic import EmailStr
+from ...core.utils.cache import cache
+from functools import wraps
 
 router = fastapi.APIRouter(tags=["hospitals"])
+
+
+
 
 
 @router.post("/hospital", response_model=HospitalRead, status_code=201)
@@ -46,6 +51,7 @@ async def write_hospital(
 
 
 @router.get("/hospitals", response_model=PaginatedListResponse[HospitalRead], status_code=200)
+# define the cache function for this endpoint to get all hospitals
 async def get_all_hospitals(
     request: Request,
     current_user: Annotated[dict, Depends(get_current_doctor_or_hospital)],
@@ -100,9 +106,11 @@ async def filter_by_city(state: str,
     return paginated_response(crud_data=hospitals_data, page=page, items_per_page=items_per_page)
 
 
-@router.get("/hospital/doctors", status_code=200)
+@router.get("/hospital/doctors/{hospital_id}", status_code=200)
+@cache(key_prefix="{hospital_id}_doctors_list_cache", resource_id_name="hospital_id", expiration=60, )
 async def get_hospital_doctors(
     request: Request,
+    hospital_id: str,
     current_user: Annotated[dict, Depends(get_current_doctor_or_hospital)],
     db: Annotated[AsyncSession, Depends(async_get_db)]
 ) -> dict:
@@ -114,9 +122,11 @@ async def get_hospital_doctors(
     return hospital_doctors
 
 
-@router.get("/hospital/patients", status_code=200)
+@router.get("/hospital/patients/{hospital_id}", status_code=200)
+@cache(key_prefix="{hospital_id}_patients_list_cache", resource_id_name="hospital_id")
 async def get_hospital_patients(
     request: Request,
+    hospital_id: str,
     current_user: Annotated[dict, Depends(get_current_doctor_or_hospital)],
     db: Annotated[AsyncSession, Depends(async_get_db)]
 ) -> dict:
