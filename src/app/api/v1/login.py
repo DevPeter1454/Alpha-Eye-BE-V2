@@ -29,14 +29,15 @@ async def login_for_access_token(
     response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(async_get_db)],
-    role: str = "Hospital",
+    role: str = "Doctor",
 ):
 
     user = await authenticate_user(email=form_data.username, password=form_data.password, role=role, db=db)
     if not user:
         raise UnauthorizedException("Wrong email or password.")
 
-    user_read = UserRead(**user) if role == "User" else HospitalRead(**user) if role == "Hospital" else DoctorRead(**user)
+    user_read = UserRead(**user) if role == "User" else HospitalRead(**
+                                                                     user) if role == "Hospital" else DoctorRead(**user)
 
     email_to_encode = user["email"] if role == "User" else user["admin_email"] if role == "Hospital" else user["email"]
 

@@ -31,7 +31,7 @@ async def get_current_user(
     if token_data is None:
         raise UnauthorizedException("User not authenticated.")
 
-    user: dict | None = await crud_users.get(db=db, email=token_data.username_or_email, is_deleted=False) if token_data.role == "User" else await crud_hospitals.get(db=db, admin_email=token_data.username_or_email, is_deleted=False) if token_data.role == "Hospital" else await crud_doctors.get(db=db, admin_email=token_data.username_or_email, is_deleted=False)
+    user: dict | None = await crud_users.get(db=db, email=token_data.username_or_email, is_deleted=False) if token_data.role == "User" else await crud_hospitals.get(db=db, admin_email=token_data.username_or_email, is_deleted=False) if token_data.role == "Hospital" else await crud_doctors.get(db=db, email=token_data.username_or_email, is_deleted=False)
 
     # if "@" in token_data.username_or_email:
     #     user: dict | None = await crud_users.get(db=db, email=token_data.username_or_email, is_deleted=False)

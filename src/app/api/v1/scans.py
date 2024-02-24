@@ -20,6 +20,7 @@ from ...crud.crud_users import crud_users
 from ...crud.crud_tier import crud_tiers
 from ...crud.crud_scans import crud_scans
 from ...crud.crud_patients import crud_patients
+from ...crud.crud_doctors import crud_doctors
 from ...schemas.scans import ScanCreate, ScanRead, ScanUpdate
 from ...schemas.user import UserRead
 from ...core.utils.cache import cache
@@ -287,6 +288,9 @@ async def write_patient_scan(
     if not patient:
         raise NotFoundException("Patient not found")
 
+    if not current_user["doctor_id"]:
+        raise UnauthorizedException("You are not allowed to perform a scan")
+
     response = cloudinary.uploader.upload(file.file)
 
     url = 'https://www.nyckel.com/v1/functions/1havh70pkqgnqmes/invoke'
@@ -307,8 +311,8 @@ async def write_patient_scan(
         "label_name": label_name,
         "label_id": label_id,
         "label_confidence": int(label_confidence * 100),
-        "detected_conditions": "Cataracts" if label_name == "Cataracts" else "None",
-        "severity": "Mild",
+        "detected_conditions": "Cataract" if label_name == "Cataract" else "None",
+        "severity": "None",
         "health_status": "Not Normal" if label_name == "Cataracts" else "None",
         "scan_id": generate_scan_id(),
         "title": current_user["doctor_id"],
@@ -333,3 +337,58 @@ async def write_patient_scan(
     }
 
     return response_json
+
+
+@router.get("/doctor/history/{doctor_id}", status_code=200)
+async def get_doctor_scan_history(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(async_get_db)],
+    current_user: Annotated[dict, Depends(get_current_doctor_or_hospital)],
+    doctor_id: str,
+    page: int = 1,
+    items_per_page: int = 10
+):
+    if not current_user["doctor_id"]:
+        raise ForbiddenException("Not authorized")
+
+    doctor_exists = await crud_doctors.exists(db=db, doctor_id=doctor_id)
+
+    if not doctor_exists:
+        raise NotFoundException("Doctor not found")
+
+    scans = await crud_scans.get_multi(
+        db=db,
+        title=doctor_id,
+        offset=compute_offset(page, items_per_page),
+        limit=items_per_page,
+    )
+
+    all_scans = []
+
+    for scan in scans["data"]:
+        all_scans.append(
+            {
+                "scan": {
+                    "label_name": scan["label_name"],
+                    "label_id": scan["label_id"],
+                    "label_confidence": scan["label_confidence"],
+                    "detected_conditions": scan["detected_conditions"],
+                    "severity": scan["severity"],
+                    "health_status": scan["health_status"],
+                    "scan_id": scan["scan_id"],
+                    "title": scan["title"],
+                    "description": scan["description"],
+                    "recommendations": scan["recommendations"],
+                    "created_at": scan["created_at"],
+                    "is_deleted": scan["is_deleted"],
+                    "special_id": scan["special_id"]
+                },
+                "detailed_description": {
+                    "title": scan["title"],
+                    "description": scan["description"],
+                    "recommendation": scan["recommendations"]
+                }
+            }
+        )
+
+    return all_scans
