@@ -26,9 +26,6 @@ from functools import wraps
 router = fastapi.APIRouter(tags=["hospitals"])
 
 
-
-
-
 @router.post("/hospital", response_model=HospitalRead, status_code=201)
 async def write_hospital(
     request: Request,

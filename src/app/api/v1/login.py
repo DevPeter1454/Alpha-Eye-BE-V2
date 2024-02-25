@@ -47,6 +47,7 @@ async def login_for_access_token(
     refresh_token = await create_refresh_token(data={"sub": email_to_encode})
     max_age = settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
 
+    print(user_read)
     response.set_cookie(
         key="refresh_token", value=refresh_token, httponly=True, secure=True, samesite="Lax", max_age=max_age
     )

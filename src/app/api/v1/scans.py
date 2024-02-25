@@ -23,6 +23,10 @@ from ...crud.crud_patients import crud_patients
 from ...crud.crud_doctors import crud_doctors
 from ...schemas.scans import ScanCreate, ScanRead, ScanUpdate
 from ...schemas.user import UserRead
+from ...models.patients import Patient
+
+from ...models.scans import Scans
+from ...models.user import User
 from ...core.utils.cache import cache
 from pydantic import EmailStr
 from ...core.config import settings
@@ -356,39 +360,14 @@ async def get_doctor_scan_history(
     if not doctor_exists:
         raise NotFoundException("Doctor not found")
 
-    scans = await crud_scans.get_multi(
+    scans = await crud_scans.get_multi_joined(
         db=db,
+        join_model=Patient,
+        join_prefix="patient_",
+        join_on=Scans.special_id == Patient.special_id,
         title=doctor_id,
         offset=compute_offset(page, items_per_page),
-        limit=items_per_page,
+        limit=items_per_page
     )
 
-    all_scans = []
-
-    for scan in scans["data"]:
-        all_scans.append(
-            {
-                "scan": {
-                    "label_name": scan["label_name"],
-                    "label_id": scan["label_id"],
-                    "label_confidence": scan["label_confidence"],
-                    "detected_conditions": scan["detected_conditions"],
-                    "severity": scan["severity"],
-                    "health_status": scan["health_status"],
-                    "scan_id": scan["scan_id"],
-                    "title": scan["title"],
-                    "description": scan["description"],
-                    "recommendations": scan["recommendations"],
-                    "created_at": scan["created_at"],
-                    "is_deleted": scan["is_deleted"],
-                    "special_id": scan["special_id"]
-                },
-                "detailed_description": {
-                    "title": scan["title"],
-                    "description": scan["description"],
-                    "recommendation": scan["recommendations"]
-                }
-            }
-        )
-
-    return all_scans
+    return paginated_response(crud_data=scans, page=page, items_per_page=items_per_page)

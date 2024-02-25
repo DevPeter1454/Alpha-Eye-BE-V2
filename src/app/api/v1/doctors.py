@@ -12,6 +12,7 @@ from ...core.security import blacklist_token, get_password_hash, oauth2_scheme
 from ...crud.crud_rate_limit import crud_rate_limits
 from ...crud.crud_tier import crud_tiers
 from ...crud.crud_doctors import crud_doctors
+from ...crud.crud_hospitals import crud_hospitals
 from ...models.tier import Tier
 from ...schemas.tier import TierRead
 from ...schemas.hospital import HospitalRead
@@ -32,9 +33,10 @@ cloudinary.config(
 
 
 @router.post("/doctor", status_code=201, response_model=DoctorRead)
+
 async def write_doctor(
     request: Request,
-
+    hospital_id: str,
         db: Annotated[AsyncSession, Depends(async_get_db)],
         current_user: Annotated[HospitalRead, Depends(get_current_doctor_or_hospital)],
         doctor: DoctorCreate = Depends(),
@@ -42,6 +44,10 @@ async def write_doctor(
     doctor_row = await crud_doctors.get(db=db, email=doctor.email)
     if doctor_row is not None:
         raise DuplicateValueException("Doctor is already registered")
+
+    if hospital_id != current_user["hospital_id"]:
+        raise ForbiddenException(
+            "You are not authorized to perform this action")
 
     response = cloudinary.uploader.upload(file.file)
 
@@ -60,10 +66,11 @@ async def write_doctor(
 
 @router.delete("/doctor/{doctor_id}")
 async def erase_doctor(
-    request:Request,
+    request: Request,
     doctor_id: str,
     db: Annotated[AsyncSession, Depends(async_get_db)],
-    current_user: Annotated[HospitalRead, Depends(get_current_doctor_or_hospital)]
+    current_user: Annotated[HospitalRead,
+                            Depends(get_current_doctor_or_hospital)]
 ):
     doctor = await crud_doctors.get(db=db, doctor_id=doctor_id)
     if doctor is None:
