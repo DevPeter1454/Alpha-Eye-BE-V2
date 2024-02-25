@@ -37,6 +37,7 @@ async def write_hospital(
     if hospital_row is not None:
         raise DuplicateValueException("Hospital is already registered")
     hospital_internal_dict = hospital.model_dump()
+    hospital_internal_dict["is_approved"] = True
     hospital_internal_dict["hashed_password"] = get_password_hash(
         password=hospital_internal_dict["password"])
     hospital_internal_dict["hospital_id"] = generate_hospital_id()

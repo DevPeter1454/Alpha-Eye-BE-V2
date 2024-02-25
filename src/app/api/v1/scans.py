@@ -234,7 +234,9 @@ async def read_user_scan_history(
             }
         )
 
-    return all_scans
+    return {
+        "scans": all_scans
+    }
 
 
 @router.get("/history/{scan_id}")
