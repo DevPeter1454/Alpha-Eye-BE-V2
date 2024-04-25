@@ -1,8 +1,6 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'  # Build Docker image
   args: ['build', '-t', 'gcr.io/alpha-eye/alpha-eye-be-v2:v27', '.']
-- name: 'gcr.io/cloud-builders/gcloud'
-  args: ['push', 'gcr.io/alpha-eye/alpha-eye-be-v2:v27']
 # ... (other build steps, if any)
 
 - name: 'gcr.io/cloud-builders/gcloud'  # Deploy to Cloud Run
