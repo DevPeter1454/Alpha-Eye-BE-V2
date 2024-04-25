@@ -26,8 +26,6 @@ class Hospital(Base):
     lga: Mapped[str] = mapped_column(String, nullable=False)
     hospital_id: Mapped[str] = mapped_column(
         String, nullable=True, unique=True)
-    
-
 
     license_number: Mapped[str] = mapped_column(String, nullable=False)
 
@@ -40,7 +38,7 @@ class Hospital(Base):
     is_deleted: Mapped[bool] = mapped_column(default=False, index=True)
     is_superuser: Mapped[bool] = mapped_column(default=False)
     is_approved: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False)
+        Boolean, nullable=False, default=True)
     role: Mapped[str] = mapped_column(String, default="Hospital")
     uuid: Mapped[uuid_pkg.UUID] = mapped_column(
         default_factory=uuid_pkg.uuid4, primary_key=True, unique=True)

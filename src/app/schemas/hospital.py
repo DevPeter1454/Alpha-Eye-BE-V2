@@ -19,6 +19,7 @@ class HospitalBase(BaseModel):
     admin_email: Annotated[EmailStr, Field(
         examples=["user.userson@example.com"])]
     phone: Annotated[str, Field(examples=["+2347040804981"])]
+    is_approved: bool = True
 
 
 class Hospital(TimestampSchema, HospitalBase, UUIDSchema, PersistentDeletion):
