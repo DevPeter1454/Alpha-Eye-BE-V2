@@ -4,10 +4,11 @@ steps:
 # ... (other build steps, if any)
 
 - name: 'gcr.io/cloud-builders/gcloud'  # Deploy to Cloud Run
-  args: ['run', 'deploy', 'alpha-eye-cloud-run',
+  args: ['run', 'deploy', 'alpha-eye-be-v2',
           '--image', 'gcr.io/alpha-eye/alpha-eye-be-v2:v27',
           '--platform', 'managed',
           '--region', 'us-central1',
+          '--replace',
           '--set-env-vars', 'APP_NAME=projects/alpha-eye/secrets/alpha-eye-be-v2-env/versions/latest:APP_NAME',
           '--set-env-vars', 'APP_DESCRIPTION=projects/YOUR_PROJECT_ID/secrets/alpha-eye-be-v2-env/versions/latest:APP_DESCRIPTION', 
           '--set-env-vars', 'APP_VERSION=projects/alpha-eye/secrets/alpha-eye-be-v2-env/versions/latest:APP_VERSION',
