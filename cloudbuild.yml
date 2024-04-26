@@ -1,12 +1,12 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'  # Build Docker image
-  args: ['build', '-t', 'gcr.io/alpha-eye/alpha-eye-be-v2', '.']
+  args: ['build', '-t', 'northamerica-northeast1-docker.pkg.dev/alpha-eye/alpha-eye-be', '.']
 
 # ... (other build steps, if any)
 
 - name: 'gcr.io/cloud-builders/gcloud'  # Deploy to Cloud Run
   args: ['run', 'deploy', 'alpha-eye-be-v2',
-          '--image', 'gcr.io/alpha-eye/alpha-eye-be-v2',
+          '--image', 'northamerica-northeast1-docker.pkg.dev/alpha-eye/alpha-eye-be',
           '--platform', 'managed',
           '--region', 'us-central1',
           '--set-env-vars', 'APP_NAME=projects/alpha-eye/secrets/alpha-eye-be-v2-env/versions/latest:APP_NAME',
