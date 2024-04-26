@@ -41,6 +41,10 @@ keys_to_access = set().union(*(d.keys() for d in env_list))
 result_dict = {key: next((d[key] for d in env_list if key in d), None)
                for key in keys_to_access}
 
+current_file_dir = os.path.dirname(os.path.realpath(__file__))
+env_path = os.path.join(current_file_dir, "..", "..", "..", ".env")
+config = Config(env_path)
+
 
 class AppSettings(BaseSettings):
     APP_NAME: str = config("APP_NAME", default="FastAPI app")

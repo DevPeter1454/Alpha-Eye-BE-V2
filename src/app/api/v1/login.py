@@ -21,8 +21,7 @@ from ...core.security import (
     verify_token,
 )
 
-from google.cloud import secretmanager
-import json
+
 
 router = fastapi.APIRouter(tags=["login"])
 
