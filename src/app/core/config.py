@@ -50,12 +50,12 @@ config = Config(env_path)
 
 
 class AppSettings(BaseSettings):
-    APP_NAME: str = config("APP_NAME", default="FastAPI app")
-    APP_DESCRIPTION: str | None = config("APP_DESCRIPTION", default=None)
-    APP_VERSION: str | None = config("APP_VERSION", default=None)
-    LICENSE_NAME: str | None = config("LICENSE", default=None)
-    CONTACT_NAME: str | None = config("CONTACT_NAME", default=None)
-    CONTACT_EMAIL: str | None = config("CONTACT_EMAIL", default=None)
+    APP_NAME: str = "FastAPI app"
+    APP_DESCRIPTION: str | None = None
+    APP_VERSION: str | None = None
+    LICENSE_NAME: str | None = None
+    CONTACT_NAME: str | None = None
+    CONTACT_EMAIL: str | None = None
 
 
 class CryptSettings(BaseSettings):
@@ -126,7 +126,7 @@ class RedisCacheSettings(BaseSettings):
 
 
 class ClientSideCacheSettings(BaseSettings):
-    CLIENT_CACHE_MAX_AGE: int = config("CLIENT_CACHE_MAX_AGE", default=60)
+    CLIENT_CACHE_MAX_AGE: int = 60
 
 
 # class RedisQueueSettings(BaseSettings):
@@ -152,7 +152,7 @@ class EnvironmentOption(Enum):
 
 
 class EnvironmentSettings(BaseSettings):
-    ENVIRONMENT: EnvironmentOption = config("ENVIRONMENT", default="local")
+    ENVIRONMENT: EnvironmentOption = "local"
 
 
 class Settings(
