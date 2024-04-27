@@ -10,7 +10,8 @@ import json
 project_id = '522840570394'
 secret_name = 'alpha-eye-be-v2-env'
 client_sm = secretmanager.SecretManagerServiceClient()
-
+credential_path="C:\\Users\\HP\\AppData\\Roaming\\gcloud\\application_default_credentials.json"
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
 # Access the secret
 name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
 response = client_sm.access_secret_version(request={"name": name})
@@ -40,6 +41,8 @@ keys_to_access = set().union(*(d.keys() for d in env_list))
 # Create a new dictionary with values associated with the specified keys
 result_dict = {key: next((d[key] for d in env_list if key in d), None)
                for key in keys_to_access}
+
+# print(result_dict)
 
 current_file_dir = os.path.dirname(os.path.realpath(__file__))
 env_path = os.path.join(current_file_dir, "..", "..", "..", ".env")
