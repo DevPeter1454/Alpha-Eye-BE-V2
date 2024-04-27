@@ -6,6 +6,8 @@ ARG CACHEBUST=1
 # Set the working directory to /app
 WORKDIR /app
 
+COPY .env .env
+
 COPY requirements.txt ./
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
