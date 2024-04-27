@@ -4,73 +4,36 @@ from enum import Enum
 from pydantic_settings import BaseSettings
 from starlette.config import Config
 
-from google.cloud import secretmanager
-import json
-
-project_id = '522840570394'
-secret_name = 'alpha-eye-be-v2-env'
-client_sm = secretmanager.SecretManagerServiceClient()
-credential_path = "C:\\Users\\HP\\AppData\\Roaming\\gcloud\\application_default_credentials.json"
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_path
-# Access the secret
-name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
-response = client_sm.access_secret_version(request={"name": name})
-
-# Extract the secret value (JSON string)
-secret_value_json = response.payload.data.decode("UTF-8")
-
-
-def parse_env_file(env_content):
-    env_vars = {}
-    for line in env_content.splitlines():
-        if line.strip() and not line.startswith("#"):
-            key, value = line.strip().split("=", 1)
-            env_vars[key.strip()] = value.strip()
-    return env_vars
-
-
-env_vars = parse_env_file(secret_value_json)
-
-env_list = []
-
-for key, value in env_vars.items():
-    env_list.append({f"{key}": f"{value}"})
-
-keys_to_access = set().union(*(d.keys() for d in env_list))
-
-# Create a new dictionary with values associated with the specified keys
-result_dict = {key: next((d[key] for d in env_list if key in d), None)
-               for key in keys_to_access}
-
-# print(result_dict)
-
 current_file_dir = os.path.dirname(os.path.realpath(__file__))
+env_path = os.path.join(current_file_dir, "..", "..", "..", ".env")
+config = Config(env_path)
 
 
 class AppSettings(BaseSettings):
-    APP_NAME: str = "FastAPI app"
-    APP_DESCRIPTION: str | None = None
-    APP_VERSION: str | None = None
-    LICENSE_NAME: str | None = None
-    CONTACT_NAME: str | None = None
-    CONTACT_EMAIL: str | None = None
+    APP_NAME: str = config("APP_NAME", default="FastAPI app")
+    APP_DESCRIPTION: str | None = config("APP_DESCRIPTION", default=None)
+    APP_VERSION: str | None = config("APP_VERSION", default=None)
+    LICENSE_NAME: str | None = config("LICENSE", default=None)
+    CONTACT_NAME: str | None = config("CONTACT_NAME", default=None)
+    CONTACT_EMAIL: str | None = config("CONTACT_EMAIL", default=None)
 
 
 class CryptSettings(BaseSettings):
-    SECRET_KEY: str = result_dict["SECRET_KEY"]
-    ALGORITHM: str = result_dict["ALGORITHM"]
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = result_dict["ACCESS_TOKEN_EXPIRE_MINUTES"]
-    REFRESH_TOKEN_EXPIRE_DAYS: int = result_dict["REFRESH_TOKEN_EXPIRE_DAYS"]
+    SECRET_KEY: str = config("SECRET_KEY")
+    ALGORITHM: str = config("ALGORITHM", default="HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = config(
+        "ACCESS_TOKEN_EXPIRE_MINUTES", default=30)
+    REFRESH_TOKEN_EXPIRE_DAYS: int = config(
+        "REFRESH_TOKEN_EXPIRE_DAYS", default=7)
 
 
 class DatabaseSettings(BaseSettings):
     pass
 
-
 class CloudinaryConfigSettings(BaseSettings):
-    CLOUDINARY_CLOUD_NAME: str = result_dict["CLOUDINARY_CLOUD_NAME"]
-    CLOUDINARY_API_KEY: str = result_dict["CLOUDINARY_API_KEY"]
-    CLOUDINARY_API_SECRET: str = result_dict["CLOUDINARY_API_SECRET"]
+    CLOUDINARY_CLOUD_NAME: str = config("CLOUDINARY_CLOUD_NAME")
+    CLOUDINARY_API_KEY: str = config("CLOUDINARY_API_KEY")
+    CLOUDINARY_API_SECRET: str = config("CLOUDINARY_API_SECRET")
 
 # class SQLiteSettings(DatabaseSettings):
 #     SQLITE_URI: str = config("SQLITE_URI", default="./sql_app.db")
@@ -91,15 +54,17 @@ class CloudinaryConfigSettings(BaseSettings):
 
 
 class PostgresSettings(DatabaseSettings):
-    POSTGRES_USER: str = result_dict["POSTGRES_USER"].strip('""')
-    POSTGRES_PASSWORD: str = result_dict["POSTGRES_PASSWORD"].strip('""')
-    POSTGRES_SERVER: str = result_dict["POSTGRES_SERVER"].strip('""')
-    POSTGRES_PORT: int = result_dict["POSTGRES_PORT"].strip('""')
-    POSTGRES_DB: str = result_dict["POSTGRES_DB"].strip('""')
-    POSTGRES_SYNC_PREFIX: str = "postgresql://"
-    POSTGRES_ASYNC_PREFIX: str = "postgresql+asyncpg://"
+    POSTGRES_USER: str = config("POSTGRES_USER", default="postgres")
+    POSTGRES_PASSWORD: str = config("POSTGRES_PASSWORD", default="postgres")
+    POSTGRES_SERVER: str = config("POSTGRES_SERVER", default="localhost")
+    POSTGRES_PORT: int = config("POSTGRES_PORT", default=5432)
+    POSTGRES_DB: str = config("POSTGRES_DB", default="postgres")
+    POSTGRES_SYNC_PREFIX: str = config(
+        "POSTGRES_SYNC_PREFIX", default="postgresql://")
+    POSTGRES_ASYNC_PREFIX: str = config(
+        "POSTGRES_ASYNC_PREFIX", default="postgresql+asyncpg://")
     POSTGRES_URI: str = f"{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_SERVER}:{POSTGRES_PORT}/{POSTGRES_DB}"
-    POSTGRES_URL: str | None = f"{POSTGRES_URI}"
+    POSTGRES_URL: str | None = config("POSTGRES_URL", default=None)
 
 
 # class FirstUserSettings(BaseSettings):
@@ -117,14 +82,15 @@ class PostgresSettings(DatabaseSettings):
 
 
 class RedisCacheSettings(BaseSettings):
-    REDIS_CACHE_HOST: str = result_dict["REDIS_CACHE_HOST"]
-    REDIS_CACHE_PORT: int = result_dict["REDIS_CACHE_PORT"]
-    REDIS_CACHE_PASSWORD: str = result_dict["REDIS_CACHE_PASSWORD"]
+    REDIS_CACHE_HOST: str = config("REDIS_CACHE_HOST", default="localhost")
+    REDIS_CACHE_PORT: int = config("REDIS_CACHE_PORT", default=6379)
+    REDIS_CACHE_PASSWORD: str = config(
+        "REDIS_CACHE_PASSWORD", default="password")
     REDIS_CACHE_URL: str = f"redis://:{REDIS_CACHE_PASSWORD}@{REDIS_CACHE_HOST}:{REDIS_CACHE_PORT}"
 
 
 class ClientSideCacheSettings(BaseSettings):
-    CLIENT_CACHE_MAX_AGE: int = 60
+    CLIENT_CACHE_MAX_AGE: int = config("CLIENT_CACHE_MAX_AGE", default=60)
 
 
 # class RedisQueueSettings(BaseSettings):
@@ -150,7 +116,7 @@ class EnvironmentOption(Enum):
 
 
 class EnvironmentSettings(BaseSettings):
-    ENVIRONMENT: EnvironmentOption = "local"
+    ENVIRONMENT: EnvironmentOption = config("ENVIRONMENT", default="local")
 
 
 class Settings(
