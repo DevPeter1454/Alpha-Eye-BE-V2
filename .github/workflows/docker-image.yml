@@ -8,11 +8,23 @@ on:
 
 jobs:
 
-  build:
+  build-and-push:
 
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag alpha-eye-be-latest-v2:$(date +%s)
+     - name: Check out the repo
+       uses: actions/checkout@v2
+       
+     - name: Log in to Docker hub
+       uses: docker/login-action@v1
+       with:
+         username: ${{secrets.DOCKERHUB_USERNAME}}
+         password: ${{secrets.DOCKERHUB_PASSWORD}}
+         
+     - name: Build and push Docker Image
+       uses: docker/build-push-action@v3
+       with:
+         context: .
+         push: true
+         tags: hackeronedev/alpha-eye-be-v2:latest
