@@ -45,8 +45,7 @@ result_dict = {key: next((d[key] for d in env_list if key in d), None)
 # print(result_dict)
 
 current_file_dir = os.path.dirname(os.path.realpath(__file__))
-env_path = os.path.join(current_file_dir, "..", "..", "..", ".env")
-config = Config(env_path)
+
 
 
 class AppSettings(BaseSettings):
