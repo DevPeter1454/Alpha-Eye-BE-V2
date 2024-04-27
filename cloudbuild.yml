@@ -1,6 +1,7 @@
 steps:
 - name: 'gcr.io/cloud-builders/docker'  # Build Docker image
-  args: ['build', '--no-cache','-t', 'northamerica-northeast1-docker.pkg.dev/alpha-eye/alpha-eye-be/alpha-eye-be-v2', '.']
+  args: ['build', '--no-cache','-t', 'northamerica-northeast1-docker.pkg.dev/alpha-eye/alpha-eye-be-latest/alpha-eye-be-v2:latest', '.']
+
 # New deployment step
 # - name: 'gcr.io/cloud-builders/gcloud'  # Deploy image to Cloud Run
 #   args: ['run', 'deploy', 'alpha-eye-be-v2',  # Your Cloud Run service name
@@ -9,7 +10,7 @@ steps:
 #         '--platform', 'managed'  # Specify platform (managed for Cloud Run)
 #        ]
 images:
-- 'northamerica-northeast1-docker.pkg.dev/alpha-eye/alpha-eye-be/alpha-eye-be-v2'
+- 'northamerica-northeast1-docker.pkg.dev/alpha-eye/alpha-eye-be-latest/alpha-eye-be-v2:latest'
 
 # ... (other build steps, if any)
 
