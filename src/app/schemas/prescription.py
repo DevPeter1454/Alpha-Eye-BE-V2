@@ -18,7 +18,7 @@ class PrescriptionBase(BaseModel):
     patient_id: str
 
     created_at: datetime
-    is_deleted: bool = False
+    
     
 class PrescriptionCreate(PrescriptionBase):
     model_config = ConfigDict(extra="forbid")
