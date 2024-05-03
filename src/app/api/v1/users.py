@@ -20,27 +20,12 @@ from pydantic import EmailStr, Field
 
 from ...core.config import settings
 
+from ...core.firebase_config import firebase_db
+
 import pyrebase
 
 
 router = fastapi.APIRouter(tags=["users"])
-
-firebase_config = {
-    "apiKey" : settings.FIREBASE_API_KEY,
-    "authDomain" : settings.FIREBASE_AUTH_DOMAIN,
-    "projectId" : settings.FIREBASE_PROJECT_ID,
-    "storageBucket" : settings.FIREBASE_STORAGE_BUCKET,
-    "databaseURL": settings.FIREBASE_DATABASE_URL,
-    "messagingSenderId": settings.FIREBASE_MESSAGING_SENDER_ID,
-    "appId": settings.FIREBASE_APP_ID,
-    "measurementId": settings.FIREBASE_MEASUREMENT_ID
-}
-
-firebase = pyrebase.initialize_app(firebase_config)
-
-firebase_db = firebase.database()
-
-
 
 
 @router.post("/user", response_model=UserRead, status_code=201)
@@ -63,7 +48,7 @@ async def write_user(
     return created_user
 
 
-@router.post("/user/device-token", status_code = 200)
+@router.post("/user/device-token", status_code=200)
 async def get_user_device_token(request: Request, deviceToken: str, current_user: Annotated[UserRead, Depends(get_current_user)], db: Annotated[AsyncSession, Depends(async_get_db)]):
 
     special_id = current_user['special_id']
@@ -74,7 +59,7 @@ async def get_user_device_token(request: Request, deviceToken: str, current_user
 
     user = firebase_db.child("users").child(special_id).get()
 
-    if user.val() is None:
+    if user.val() is None :
         data = {
             "special_id": special_id,
             "tokens": [deviceToken],
@@ -87,7 +72,7 @@ async def get_user_device_token(request: Request, deviceToken: str, current_user
         new_token_list.extend(old_token_list)
         if deviceToken not in new_token_list:
             new_token_list.append(deviceToken)
-        
+
         updated_data = {
             "special_id": special_id,
             "tokens": new_token_list,
@@ -97,13 +82,6 @@ async def get_user_device_token(request: Request, deviceToken: str, current_user
         firebase_db.child("users").child(special_id).update(updated_data)
 
     return {"message": "device token saved successfully"}
-
-
-
-    
-
-    
-
 
 
 @router.get("/users", response_model=PaginatedListResponse[UserRead])
@@ -126,9 +104,6 @@ async def read_users(
 @router.get("/user/me/", response_model=UserRead)
 async def read_users_me(request: Request, current_user: Annotated[UserRead, Depends(get_current_user)]) -> UserRead:
     return current_user
-
-
-
 
 
 @router.get("/user/{special_id}", response_model=UserRead)
