@@ -22,7 +22,6 @@ from ...core.security import (
 )
 
 
-
 router = fastapi.APIRouter(tags=["login"])
 
 
@@ -31,7 +30,7 @@ async def login_for_access_token(
     response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(async_get_db)],
-    role: str = "Doctor",
+    role: str = "User",
 ):
 
     user = await authenticate_user(email=form_data.username, password=form_data.password, role=role, db=db)

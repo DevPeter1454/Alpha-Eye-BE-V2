@@ -16,9 +16,31 @@ from ...models.tier import Tier
 from ...schemas.tier import TierRead
 from ...schemas.user import UserCreate, UserCreateInternal, UserRead, UserTierUpdate, UserUpdate
 from ...core.utils.cache import cache
-from pydantic import EmailStr
+from pydantic import EmailStr, Field
+
+from ...core.config import settings
+
+import pyrebase
+
 
 router = fastapi.APIRouter(tags=["users"])
+
+firebase_config = {
+    "apiKey" : settings.FIREBASE_API_KEY,
+    "authDomain" : settings.FIREBASE_AUTH_DOMAIN,
+    "projectId" : settings.FIREBASE_PROJECT_ID,
+    "storageBucket" : settings.FIREBASE_STORAGE_BUCKET,
+    "databaseURL": settings.FIREBASE_DATABASE_URL,
+    "messagingSenderId": settings.FIREBASE_MESSAGING_SENDER_ID,
+    "appId": settings.FIREBASE_APP_ID,
+    "measurementId": settings.FIREBASE_MEASUREMENT_ID
+}
+
+firebase = pyrebase.initialize_app(firebase_config)
+
+firebase_db = firebase.database()
+
+
 
 
 @router.post("/user", response_model=UserRead, status_code=201)
@@ -40,6 +62,47 @@ async def write_user(
     created_user: UserRead = await crud_users.create(db=db, object=user_internal)
     return created_user
 
+
+@router.post("/user/device-token", status_code = 200)
+async def get_user_device_token(request: Request, deviceToken: str, current_user: Annotated[UserRead, Depends(get_current_user)], db: Annotated[AsyncSession, Depends(async_get_db)]):
+
+    special_id = current_user['special_id']
+
+    first_name = current_user['firstname']
+
+    last_name = current_user["lastname"]
+
+    user = firebase_db.child("users").child(special_id).get()
+
+    if user.val() is None:
+        data = {
+            "special_id": special_id,
+            "tokens": [deviceToken],
+            "name": f"{first_name} {last_name}"
+        }
+        firebase_db.child("users").child(special_id).set(data)
+    else:
+        new_token_list = []
+        old_token_list = user.val()["tokens"]
+        new_token_list.extend(old_token_list)
+        if deviceToken not in new_token_list:
+            new_token_list.append(deviceToken)
+        
+        updated_data = {
+            "special_id": special_id,
+            "tokens": new_token_list,
+            "name": f"{first_name} {last_name}"
+        }
+
+        firebase_db.child("users").child(special_id).update(updated_data)
+
+    return {"message": "device token saved successfully"}
+
+
+
+    
+
+    
 
 
 
@@ -63,6 +126,9 @@ async def read_users(
 @router.get("/user/me/", response_model=UserRead)
 async def read_users_me(request: Request, current_user: Annotated[UserRead, Depends(get_current_user)]) -> UserRead:
     return current_user
+
+
+
 
 
 @router.get("/user/{special_id}", response_model=UserRead)

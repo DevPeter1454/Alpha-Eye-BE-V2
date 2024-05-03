@@ -81,6 +81,25 @@ async def write_prescription(prescription: PrescriptionCreate, db: Annotated[Asy
     created_prescription: PrescriptionRead = await crud_prescriptions.create(db=db, object=prescription_internal)
     return created_prescription
 
+@router.get("doctor/prescriptions", status_code= 200)
+async def get_prescriptions_list(
+    request: Request,
+    db: Annotated[AsyncSession, Depends(async_get_db)],
+    current_user: Annotated[HospitalRead, Depends(get_current_doctor_or_hospital)],
+    page: int = 1,
+    items_per_page: int = 10
+):
+    
+
+    prescriptions_data = await crud_prescriptions.get_multi(db=db, doctor_id= current_user["doctor_id"], offset=compute_offset(page, items_per_page),
+        limit=items_per_page,)
+    
+    return prescriptions_data
+
+@router.patch("doctor/prescription/{prescription_id}")
+async def update_prescription():
+    pass
+
 
 @router.delete("/doctor/{doctor_id}")
 async def erase_doctor(
