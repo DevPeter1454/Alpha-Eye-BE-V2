@@ -20,6 +20,7 @@ from .config import (
     EnvironmentSettings,
     RedisCacheSettings,
     FirebaseConfigSettings,
+    CredentialsConfigSettings,
     # RedisQueueSettings,
     # RedisRateLimiterSettings,
     settings,
@@ -80,6 +81,7 @@ def create_application(
         | ClientSideCacheSettings
         | CloudinaryConfigSettings
         | FirebaseConfigSettings
+        | CredentialsConfigSettings
         # | RedisQueueSettings
         # | RedisRateLimiterSettings
         | EnvironmentSettings

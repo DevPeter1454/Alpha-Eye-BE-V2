@@ -105,6 +105,13 @@ class FirebaseConfigSettings(BaseSettings):
     FIREBASE_MEASUREMENT_ID: str = config("FIREBASE_MEASUREMENT_ID", default="None")
 
 
+class CredentialsConfigSettings(BaseSettings):
+    CREDENTIAL: str = config("CREDENTIALS", default="None")
+    
+
+
+
+
 
 
 
@@ -141,11 +148,14 @@ class Settings(
     PostgresSettings,
     CryptSettings,
     CloudinaryConfigSettings,
+
     # FirstUserSettings,
     # TestSettings,
     RedisCacheSettings,
     ClientSideCacheSettings,
     FirebaseConfigSettings,
+    CredentialsConfigSettings,
+
     # RedisQueueSettings,
     # RedisRateLimiterSettings,
     # DefaultRateLimitSettings,
